@@ -193,30 +193,34 @@ fn main() -> Result<()> {
                             let path_source = {
                                 let mut p = PathBuf::from(&config.upload);
                                 p.push(upload);
-                                p.canonicalize()?
+                                match p.canonicalize() {
+                                    Ok(canonical) => {
+                                        if canonical.starts_with(&config.upload) {
+                                            canonical
+                                        } else {
+                                            warn!(
+                                                "Possible traversal request: `{}` (post #{}, user #{})",
+                                                canonical.to_string_lossy(),
+                                                post.id,
+                                                post.user_id
+                                            );
+                                            continue;
+                                        }
+                                    }
+                                    Err(e) => {
+                                        error!("{e}: `{}` (post #{})", p.to_string_lossy(), post.id);
+                                        continue;
+                                    }
+                                }
                             };
                             let path_target = {
                                 let mut p = PathBuf::from(&config.target);
                                 p.push(upload);
-                                p.canonicalize()?
+                                p
                             };
-
-                            // prevent traversal request
-                            assert!(path_source.starts_with(&config.upload));
-                            assert!(path_target.starts_with(&config.target));
-
-                            let path_parent = path_target.parent().unwrap();
-
-                            create_dir_all(path_parent)?;
                             if !path_target.exists() {
-                                if path_source.exists() {
-                                    copy(path_source, path_target)?;
-                                } else {
-                                    warn!(
-                                        "Source file does not exist: `{}`",
-                                        path_source.to_string_lossy()
-                                    )
-                                }
+                                create_dir_all(path_target.parent().unwrap())?;
+                                copy(path_source, path_target)?;
                             }
                         }
                         content.push("---\n".into())
