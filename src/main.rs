@@ -33,6 +33,7 @@ pub struct Discussion {
     pub id: i64,
     pub created_at: DateTime<Utc>,
     pub title: String,
+    pub slug: String,
     pub posts: Vec<Post>,
 }
 
@@ -108,6 +109,7 @@ fn main() -> Result<()> {
             id: discussion.id,
             created_at: discussion.created_at,
             title: discussion.title,
+            slug: discussion.slug,
             posts,
         })
     }
@@ -142,7 +144,7 @@ fn main() -> Result<()> {
         file.write_all(footer.join("\n").as_bytes())?
     }
 
-    for discussion in discussions {
+    for discussion in &discussions {
         let mut file = File::create_new({
             let mut path = PathBuf::from(&config.target);
             path.push(format!("{}.md", discussion.id));
@@ -154,7 +156,7 @@ fn main() -> Result<()> {
                 page.push(format!("# {}\n", discussion.title.trim()));
                 page.push({
                     let mut content = Vec::new();
-                    for post in discussion.posts {
+                    for post in &discussion.posts {
                         content.push(format!(
                             "_@{} / {}{}_\n",
                             users.get(&post.user_id).unwrap().username,
@@ -164,10 +166,29 @@ fn main() -> Result<()> {
                                 .unwrap_or_default()
                         ));
                         let mut uploads = HashSet::new();
-                        content.push(post_format(&convert(
-                            pre_format(&post.content, &mut uploads).trim(),
-                            None,
-                        )?));
+                        content.push({
+                            let mut post = post_format(&convert(
+                                pre_format(&post.content, &mut uploads).trim(),
+                                None,
+                            )?);
+                            for d in &discussions {
+                                post = post
+                                    .replace(
+                                        &format!("](/d/{}-{})", d.id, d.slug),
+                                        &format!("]({}.md)", d.id),
+                                    )
+                                    .replace(
+                                        &format!("](d/{}-{})", d.id, d.slug),
+                                        &format!("]({}.md)", d.id),
+                                    )
+                                    .replace(
+                                        &format!("]({}-{})", d.id, d.slug),
+                                        &format!("]({}.md)", d.id),
+                                    )
+                                    .replace(&format!("]({})", d.id), &format!("]({}.md)", d.id))
+                            }
+                            post
+                        });
                         for upload in &uploads {
                             let path_source = {
                                 let mut p = PathBuf::from(&config.upload);

@@ -19,7 +19,7 @@ pub struct Discussion {
     pub first_post_id: i64,
     pub created_at: DateTime<Utc>,
     pub title: String,
-    //pub slug: String,
+    pub slug: String,
 }
 
 pub struct Post {
@@ -73,7 +73,7 @@ impl Database {
                 first_post_id: row.get(2)?,
                 created_at: row.get(3)?,
                 title: row.get(4)?,
-                //slug: row.get(5)?,
+                slug: row.get(5)?,
             })
         })?
         .collect()
