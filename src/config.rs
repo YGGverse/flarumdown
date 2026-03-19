@@ -8,6 +8,11 @@ pub struct Config {
     #[arg(short, long)]
     pub source: PathBuf,
 
+    /// Path to export FoF/upload tags from
+    /// * tip: root should be the path to `flarum/public` dir
+    #[arg(short, long)]
+    pub upload: PathBuf,
+
     /// Path to export markdown
     #[arg(short, long)]
     pub target: PathBuf,

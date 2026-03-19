@@ -2,15 +2,17 @@ mod config;
 mod database;
 
 use anyhow::Result;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local, Utc};
 use clap::Parser;
 use config::Config;
 use database::Database;
 use html_to_markdown_rs::convert;
-use regex::Regex;
+use log::*;
+use regex::{Captures, Regex};
 use std::{
-    collections::HashMap,
-    fs::{File, create_dir_all, remove_dir_all},
+    collections::{HashMap, HashSet},
+    env::var,
+    fs::{File, copy, create_dir_all, remove_dir_all},
     io::Write,
     path::PathBuf,
 };
@@ -35,6 +37,20 @@ pub struct Discussion {
 }
 
 fn main() -> Result<()> {
+    if var("RUST_LOG").is_ok() {
+        use tracing_subscriber::{EnvFilter, fmt::*};
+        struct T;
+        impl time::FormatTime for T {
+            fn format_time(&self, w: &mut format::Writer<'_>) -> std::fmt::Result {
+                write!(w, "{}", Local::now())
+            }
+        }
+        fmt()
+            .with_timer(T)
+            .with_env_filter(EnvFilter::from_default_env())
+            .init()
+    }
+
     let config = Config::parse();
 
     if config.target.exists() {
@@ -128,10 +144,36 @@ fn main() -> Result<()> {
                                 .map(|edited_at| format!(" / {}", edited_at))
                                 .unwrap_or_default()
                         ));
+                        let mut uploads = HashSet::new();
                         content.push(post_format(&convert(
-                            pre_format(&post.content).trim(),
+                            pre_format(&post.content, &mut uploads).trim(),
                             None,
                         )?));
+                        for upload in &uploads {
+                            let path_source = {
+                                let mut p = PathBuf::from(&config.upload);
+                                p.push(upload);
+                                p
+                            };
+                            let path_target = {
+                                let mut p = PathBuf::from(&config.target);
+                                p.push(upload);
+                                p
+                            };
+                            let path_parent = path_target.parent().unwrap();
+
+                            create_dir_all(path_parent)?;
+                            if !path_target.exists() {
+                                if path_source.exists() {
+                                    copy(path_source, path_target)?;
+                                } else {
+                                    warn!(
+                                        "Source file does not exists: `{}`",
+                                        path_source.to_string_lossy()
+                                    )
+                                }
+                            }
+                        }
                         content.push("---\n".into())
                     }
                     content.join("\n")
@@ -145,11 +187,28 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn pre_format(data: &str) -> String {
-    let s = Regex::new(r"<s>[^<]+</s>").unwrap();
-    let e = Regex::new(r"<e>[^<]+</e>").unwrap();
-
-    e.replace_all(&s.replace_all(data, ""), "")
+fn pre_format(data: &str, uploads: &mut HashSet<PathBuf>) -> String {
+    Regex::new(r"<e>[^<]+</e>")
+        .unwrap()
+        .replace_all(
+            &Regex::new(r"<s>[^<]+</s>").unwrap().replace_all(
+                &Regex::new(r"(?s)<UPL-IMAGE-PREVIEW([^>]+)>\[[^\]]+\]</UPL-IMAGE-PREVIEW>")
+                    .unwrap()
+                    .replace_all(data, |c: &Captures| {
+                        uploads.insert(
+                            Regex::new(r#"url="([^"]+)""#)
+                                .unwrap()
+                                .captures(&c[1])
+                                .unwrap()[1]
+                                .trim_start_matches("/")
+                                .into(),
+                        );
+                        format!("<img{}>", c[1].replace(" url=", " src="))
+                    }),
+                "",
+            ),
+            "",
+        )
         .replace("<C", "<code")
         .replace("</C>", "</code>")
         .replace("<LIST", "<ul")
