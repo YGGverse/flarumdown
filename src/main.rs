@@ -12,7 +12,7 @@ use regex::{Captures, Regex};
 use std::{
     collections::{HashMap, HashSet},
     env::var,
-    fs::{File, copy, create_dir_all, remove_dir_all},
+    fs::{File, copy, create_dir_all, read_dir, remove_dir_all, remove_file},
     io::Write,
     path::PathBuf,
 };
@@ -54,10 +54,17 @@ fn main() -> Result<()> {
 
     let config = Config::parse();
 
-    if config.target.exists() {
-        remove_dir_all(&config.target)?
+    if !config.target.exists() {
+        create_dir_all(&config.target)?;
     }
-    create_dir_all(&config.target)?;
+    for entry in read_dir(&config.target)? {
+        let path = entry?.path();
+        if path.is_file() {
+            remove_file(path)?;
+        } else if path.is_dir() && config.upload.is_some() {
+            remove_dir_all(path)?;
+        }
+    }
 
     let mut db = Database::connect(config.source)?;
 
