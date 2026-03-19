@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use rusqlite::{Connection, Error};
+use rusqlite::{Connection, Error, OpenFlags};
 use std::path::PathBuf;
 
 pub struct User {
@@ -34,7 +34,10 @@ pub struct Database(Connection);
 
 impl Database {
     pub fn connect(path: PathBuf) -> Result<Self, Error> {
-        Ok(Self(Connection::open(path)?))
+        Ok(Self(Connection::open_with_flags(
+            path,
+            OpenFlags::SQLITE_OPEN_READ_ONLY,
+        )?))
     }
 
     pub fn users(&mut self) -> Result<Vec<User>, Error> {
