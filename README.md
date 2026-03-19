@@ -6,7 +6,7 @@
 
 Flarum is down - read as Markdown
 
-CLI tool for Flarum v2 that allows to export public DB into the Markdown format.
+CLI tool for Flarum v2 that allows to export public DB into Markdown format.
 
 > [!IMPORTANT]
 > In development

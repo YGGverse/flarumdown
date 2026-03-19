@@ -5,7 +5,7 @@ edition = "2024"
 license = "MIT"
 readme = "README.md"
 description = "Flarum is down - read as Markdown"
-keywords = ["archive", "conversion", "backup", "static", "dump"]
+keywords = ["archive", "conversion", "static", "dump"]
 categories = ["command-line-utilities", "parsing", "text-processing", "value-formatting"]
 repository = "https://github.com/YGGverse/flarumdown"
 
