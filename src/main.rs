@@ -193,13 +193,18 @@ fn main() -> Result<()> {
                             let path_source = {
                                 let mut p = PathBuf::from(&config.upload);
                                 p.push(upload);
-                                p
+                                p.canonicalize()?
                             };
                             let path_target = {
                                 let mut p = PathBuf::from(&config.target);
                                 p.push(upload);
-                                p
+                                p.canonicalize()?
                             };
+
+                            // prevent traversal request
+                            assert!(path_source.starts_with(&config.upload));
+                            assert!(path_target.starts_with(&config.target));
+
                             let path_parent = path_target.parent().unwrap();
 
                             create_dir_all(path_parent)?;
