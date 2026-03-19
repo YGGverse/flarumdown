@@ -96,6 +96,17 @@ fn main() -> Result<()> {
         })
     }
 
+    if let Some(index) = config.index {
+        let mut file = File::create_new({
+            let mut path = PathBuf::from(&config.target);
+            path.push(format!("{}.md", index.trim_end_matches(".md")));
+            path
+        })?;
+        for discussion in &discussions {
+            file.write_all(format!("* [{}]({}.md)\n", discussion.title, discussion.id).as_bytes())?;
+        }
+    }
+
     for discussion in discussions {
         let mut file = File::create_new({
             let mut path = PathBuf::from(&config.target);

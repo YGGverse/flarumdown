@@ -16,4 +16,8 @@ pub struct Config {
     /// * keep empty to export all
     #[arg(short, long)]
     pub filter_tag: Vec<String>,
+
+    /// Generate index file with given name
+    #[arg(short, long)]
+    pub index: Option<String>,
 }
