@@ -168,7 +168,7 @@ fn main() -> Result<()> {
                                     copy(path_source, path_target)?;
                                 } else {
                                     warn!(
-                                        "Source file does not exists: `{}`",
+                                        "Source file does not exist: `{}`",
                                         path_source.to_string_lossy()
                                     )
                                 }
