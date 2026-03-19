@@ -265,6 +265,8 @@ fn pre_format(data: &str, uploads: &mut HashSet<PathBuf>) -> String {
         )
         .replace("<C", "<code")
         .replace("</C>", "</code>")
+        .replace("<QUOTE", "<blockquote")
+        .replace("</QUOTE>", "</blockquote>")
         .replace("<LIST", "<ul")
         .replace("</LIST>", "</ul>")
         .replace("<URL", "<a")
