@@ -1,0 +1,17 @@
+[package]
+name = "flarumdown"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+readme = "README.md"
+description = "Flarum is down - read as Markdown"
+keywords = ["archive", "conversion", "backup", "static", "dump"]
+categories = ["command-line-utilities", "parsing", "text-processing", "value-formatting"]
+repository = "https://github.com/YGGverse/flarumdown"
+
+[dependencies]
+anyhow = "1.0.102"
+chrono = "0.4.44"
+clap = { version = "4.6.0", features = ["derive"] }
+html-to-markdown-rs = "2.28.2"
+rusqlite = { version = "0.39.0", features = ["chrono"]}
