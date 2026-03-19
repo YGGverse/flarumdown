@@ -117,7 +117,7 @@ fn main() -> Result<()> {
                                 .unwrap_or_default()
                         ));
                         content.push("---".into());
-                        content.push(convert(&strip_tags(&post.content), None)?)
+                        content.push(convert(strip_tags(&post.content).trim(), None)?)
                     }
                     content.join("\n")
                 });
