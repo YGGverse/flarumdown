@@ -119,8 +119,27 @@ fn main() -> Result<()> {
             path
         })?;
         for discussion in &discussions {
-            file.write_all(format!("* [{}]({}.md)\n", discussion.title, discussion.id).as_bytes())?;
+            file.write_all(
+                format!(
+                    "* [{}]({}.md)\n",
+                    discussion
+                        .title
+                        .replace("[", "\\[")
+                        .replace("]", "\\]")
+                        .replace("(", "\\(")
+                        .replace(")", "\\)"),
+                    discussion.id
+                )
+                .as_bytes(),
+            )?;
         }
+        let mut footer = Vec::new();
+        footer.push("\n---\n".into());
+        footer.push(format!("Generated at {}\n", Utc::now()));
+        for refer in &config.refer {
+            footer.push(format!("* {refer}"));
+        }
+        file.write_all(footer.join("\n").as_bytes())?
     }
 
     for discussion in discussions {
@@ -175,6 +194,14 @@ fn main() -> Result<()> {
                             }
                         }
                         content.push("---\n".into())
+                    }
+                    content.push(format!("Generated at {}\n", Utc::now()));
+                    for refer in &config.refer {
+                        content.push(format!(
+                            "* {}/d/{}",
+                            refer.trim_end_matches("/"),
+                            discussion.id
+                        ));
                     }
                     content.join("\n")
                 });

@@ -25,4 +25,8 @@ pub struct Config {
     /// Generate index file with given name
     #[arg(short, long)]
     pub index: Option<String>,
+
+    /// Append reference to original source (mirrors)
+    #[arg(short, long)]
+    pub refer: Vec<String>,
 }
