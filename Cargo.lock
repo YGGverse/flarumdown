@@ -273,6 +273,7 @@ dependencies = [
  "chrono",
  "clap",
  "html-to-markdown-rs",
+ "regex",
  "rusqlite",
 ]
 

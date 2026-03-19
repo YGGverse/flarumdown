@@ -109,7 +109,7 @@ fn main() -> Result<()> {
                     let mut content = Vec::new();
                     for post in discussion.posts {
                         content.push(format!(
-                            "@{} / {}{}",
+                            "_@{} / {}{}_",
                             users.get(&post.user_id).unwrap().username,
                             post.created_at,
                             post.edited_at
@@ -117,7 +117,7 @@ fn main() -> Result<()> {
                                 .unwrap_or_default()
                         ));
                         content.push("---".into());
-                        content.push(convert(&post.content, None)?)
+                        content.push(convert(&strip_tags(&post.content), None)?)
                     }
                     content.join("\n")
                 });
@@ -128,4 +128,22 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn strip_tags(data: &str) -> String {
+    use regex::Regex;
+
+    let s = Regex::new(r"<s>[^<]+</s>").unwrap();
+    let e = Regex::new(r"<e>[^<]+</e>").unwrap();
+
+    e.replace_all(&s.replace_all(data, ""), "")
+        .replace("<C", "<code")
+        .replace("</C>", "</code>")
+        .replace("<LIST", "<ul")
+        .replace("</LIST>", "</ul>")
+        .replace("<URL", "<a")
+        .replace("</URL>", "</a>")
+        .replace(" url=", " href=")
+        .replace("<r>", "")
+        .replace("</r>", "")
 }
