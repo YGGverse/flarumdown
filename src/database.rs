@@ -89,7 +89,7 @@ impl Database {
     pub fn posts(&mut self, discussion_id: i64) -> Result<Vec<Post>, Error> {
         self.0.prepare(
             "SELECT `id`, `user_id`, `created_at`, `edited_at`, `content`
-                FROM `posts` WHERE `discussion_id` = ? AND `is_private` <> 1 AND `is_approved` <> 0 AND `hidden_at` IS NULL
+                FROM `posts` WHERE `discussion_id` = ? AND `type` = 'comment' AND `is_private` <> 1 AND `is_approved` <> 0 AND `hidden_at` IS NULL
                 ORDER BY `number` ASC",
         )?.query_map([discussion_id], |row| {
             Ok(Post {
