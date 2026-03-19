@@ -195,42 +195,42 @@ fn main() -> Result<()> {
                                 p.push(upload);
                                 p
                             };
-                            // upload option is active, create files copy in the destinations
-                            if let Some(ref upload_source) = config.upload {
-                                let path_source = {
+                            match config.upload {
+                                // upload option is active,
+                                // create files copy in the destinations
+                                Some(ref upload_source) => {
                                     let mut p = PathBuf::from(upload_source);
                                     p.push(upload);
                                     match p.canonicalize() {
-                                        Ok(canonical) => {
-                                            if canonical.starts_with(upload_source) {
-                                                canonical
+                                        Ok(src) => {
+                                            if src.starts_with(upload_source) {
+                                                if !path_target.exists() {
+                                                    create_dir_all(path_target.parent().unwrap())?;
+                                                    copy(src, path_target)?;
+                                                }
                                             } else {
                                                 warn!(
                                                     "Possible traversal injection: `{}` (post #{}, user #{})",
-                                                    canonical.to_string_lossy(),
+                                                    src.to_string_lossy(),
                                                     post.id,
                                                     post.user_id
-                                                );
-                                                continue;
+                                                )
                                             }
                                         }
-                                        Err(e) => {
-                                            error!("{e}: `{}` (post #{})", p.to_string_lossy(), post.id);
-                                            continue;
-                                        }
+                                        Err(e) => error!("{e}: `{}` (post #{})", p.to_string_lossy(), post.id)
                                     }
-                                };
-                                if !path_target.exists() {
-                                    create_dir_all(path_target.parent().unwrap())?;
-                                    copy(path_source, path_target)?;
+                                },
+                                // task delegated to rsync
+                                // * manually pre-copied FoF/upload destinations must exist
+                                None => {
+                                    if !path_target.exists() {
+                                        warn!(
+                                            "Referenced file does not exist: `{}` (post #{})",
+                                            path_target.to_string_lossy(),
+                                            post.id
+                                        )
+                                    }
                                 }
-                            // task delegated to rsync (manually pre-copied FoF/upload destinations must exist)
-                            } else if !path_target.exists() {
-                                warn!(
-                                    "Referenced file does not exist: `{}` (post #{})",
-                                    path_target.to_string_lossy(),
-                                    post.id
-                                )
                             }
                         }
                         content.push("---\n".into())
