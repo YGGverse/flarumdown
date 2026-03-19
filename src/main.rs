@@ -7,6 +7,7 @@ use clap::Parser;
 use config::Config;
 use database::Database;
 use html_to_markdown_rs::convert;
+use regex::Regex;
 use std::{
     collections::HashMap,
     fs::{File, create_dir_all, remove_dir_all},
@@ -104,20 +105,23 @@ fn main() -> Result<()> {
         file.write_all(
             {
                 let mut page = Vec::new();
-                page.push(format!("# {}", discussion.title));
+                page.push(format!("# {}\n", discussion.title.trim()));
                 page.push({
                     let mut content = Vec::new();
                     for post in discussion.posts {
                         content.push(format!(
-                            "_@{} / {}{}_",
+                            "_@{} / {}{}_\n",
                             users.get(&post.user_id).unwrap().username,
                             post.created_at,
                             post.edited_at
                                 .map(|edited_at| format!(" / {}", edited_at))
                                 .unwrap_or_default()
                         ));
-                        content.push("---".into());
-                        content.push(convert(strip_tags(&post.content).trim(), None)?)
+                        content.push(post_format(&convert(
+                            pre_format(&post.content).trim(),
+                            None,
+                        )?));
+                        content.push("---\n".into())
                     }
                     content.join("\n")
                 });
@@ -130,9 +134,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn strip_tags(data: &str) -> String {
-    use regex::Regex;
-
+fn pre_format(data: &str) -> String {
     let s = Regex::new(r"<s>[^<]+</s>").unwrap();
     let e = Regex::new(r"<e>[^<]+</e>").unwrap();
 
@@ -146,4 +148,11 @@ fn strip_tags(data: &str) -> String {
         .replace(" url=", " href=")
         .replace("<r>", "")
         .replace("</r>", "")
+}
+
+fn post_format(data: &str) -> String {
+    Regex::new(r"\n{3,}")
+        .unwrap()
+        .replace(data, "\n\n")
+        .to_string()
 }
