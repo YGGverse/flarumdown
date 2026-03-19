@@ -228,9 +228,15 @@ fn pre_format(data: &str, uploads: &mut HashSet<PathBuf>) -> String {
                                 .captures(&c[1])
                                 .unwrap()[1]
                                 .trim_start_matches("/")
+                                .replace("d/", "")
                                 .into(),
                         );
-                        format!("<img{}>", c[1].replace(" url=", " src="))
+                        format!(
+                            "<img{}>",
+                            c[1].replace(" url=\"/", " src=\"")
+                                .replace(" url=\"d/", " src=\"")
+                                .replace(" url=", " src=")
+                        )
                     }),
                 "",
             ),
@@ -242,6 +248,8 @@ fn pre_format(data: &str, uploads: &mut HashSet<PathBuf>) -> String {
         .replace("</LIST>", "</ul>")
         .replace("<URL", "<a")
         .replace("</URL>", "</a>")
+        .replace(" url=\"/", " href=\"")
+        .replace(" url=\"d/", " href=\"")
         .replace(" url=", " href=")
         .replace("<r>", "")
         .replace("</r>", "")
