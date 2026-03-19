@@ -8,10 +8,12 @@ pub struct Config {
     #[arg(short, long)]
     pub source: PathBuf,
 
-    /// Path to export FoF/upload tags from
-    /// * tip: root should be the path to `flarum/public` dir
+    /// Path to export FoF/upload files from
+    /// tips:
+    /// * root should be the path to `flarum/public` dir
+    /// * use rsync instead of this option for longer SSD life
     #[arg(short, long)]
-    pub upload: PathBuf,
+    pub upload: Option<PathBuf>,
 
     /// Path to export markdown
     #[arg(short, long)]

@@ -190,37 +190,47 @@ fn main() -> Result<()> {
                             post
                         });
                         for upload in &uploads {
-                            let path_source = {
-                                let mut p = PathBuf::from(&config.upload);
-                                p.push(upload);
-                                match p.canonicalize() {
-                                    Ok(canonical) => {
-                                        if canonical.starts_with(&config.upload) {
-                                            canonical
-                                        } else {
-                                            warn!(
-                                                "Possible traversal request: `{}` (post #{}, user #{})",
-                                                canonical.to_string_lossy(),
-                                                post.id,
-                                                post.user_id
-                                            );
-                                            continue;
-                                        }
-                                    }
-                                    Err(e) => {
-                                        error!("{e}: `{}` (post #{})", p.to_string_lossy(), post.id);
-                                        continue;
-                                    }
-                                }
-                            };
                             let path_target = {
                                 let mut p = PathBuf::from(&config.target);
                                 p.push(upload);
                                 p
                             };
-                            if !path_target.exists() {
-                                create_dir_all(path_target.parent().unwrap())?;
-                                copy(path_source, path_target)?;
+                            // upload option is active, create files copy in the destinations
+                            if let Some(ref upload_source) = config.upload {
+                                let path_source = {
+                                    let mut p = PathBuf::from(upload_source);
+                                    p.push(upload);
+                                    match p.canonicalize() {
+                                        Ok(canonical) => {
+                                            if canonical.starts_with(upload_source) {
+                                                canonical
+                                            } else {
+                                                warn!(
+                                                    "Possible traversal injection: `{}` (post #{}, user #{})",
+                                                    canonical.to_string_lossy(),
+                                                    post.id,
+                                                    post.user_id
+                                                );
+                                                continue;
+                                            }
+                                        }
+                                        Err(e) => {
+                                            error!("{e}: `{}` (post #{})", p.to_string_lossy(), post.id);
+                                            continue;
+                                        }
+                                    }
+                                };
+                                if !path_target.exists() {
+                                    create_dir_all(path_target.parent().unwrap())?;
+                                    copy(path_source, path_target)?;
+                                }
+                            // task delegated to rsync (manually pre-copied FoF/upload destinations must exist)
+                            } else if !path_target.exists() {
+                                warn!(
+                                    "Referenced file does not exist: `{}` (post #{})",
+                                    path_target.to_string_lossy(),
+                                    post.id
+                                )
                             }
                         }
                         content.push("---\n".into())
