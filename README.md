@@ -66,5 +66,5 @@ if [ "$(pwd)" != "$TARGET_DIR" ]; then
 	echo "Unexpected path!"
 	exit 1
 fi
-zip -FS -r -9 /var/www/flarum/public/flarumdown/dump.zip .
+zip -r -9 /var/www/flarum/public/flarumdown/dump.zip .
 ```
