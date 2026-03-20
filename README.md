@@ -45,7 +45,7 @@ mkdir -p /var/www/flarum/public/flarumdown/dump/assets/files
 # collect FoF/upload files
 readonly RSYNC_FILTER_P="*-thumb.webp"
 readonly RSYNC_TARGET_D="/var/www/flarum/public/flarumdown/dump/assets"
-find "$RSYNC_TARGET_D" -name "$RSYNC_FILTER_P" -type f -delete # rsync has --filter
+find "$RSYNC_TARGET_D" -name "$RSYNC_FILTER_P" -type f -delete # rsync has --filter, cleanup
 /usr/bin/rsync -av --delete --filter="-p $RSYNC_FILTER_P" \
 		/var/www/flarum/public/assets/files \
 		$RSYNC_TARGET_D
