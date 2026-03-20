@@ -266,22 +266,22 @@ fn pre_format(data: &str, uploads: &mut HashSet<PathBuf>) -> String {
         .unwrap()
         .replace_all(
             &Regex::new(r"<s>[^<]+</s>").unwrap().replace_all(
-                &Regex::new(r"(?s)<UPL-IMAGE-PREVIEW([^>]+)>\[[^\]]+\]</UPL-IMAGE-PREVIEW>")
+                &Regex::new(r"(?s)<UPL-IMAGE-PREVIEW[^>]+>([^<]+)</UPL-IMAGE-PREVIEW>")
                     .unwrap()
                     .replace_all(data, |c: &Captures| {
                         uploads.insert(
-                            Regex::new(r#"url="([^"]+)""#)
+                            Regex::new(r#"url="?([^\s]+)"?"#)
                                 .unwrap()
                                 .captures(&c[1])
                                 .unwrap()[1]
                                 .trim_start_matches("/")
-                                .replace("d/", "")
+                                .trim_start_matches("d/")
                                 .into(),
                         );
                         format!(
                             "<img{}>",
-                            c[1].replace(" url=\"/", " src=\"")
-                                .replace(" url=\"d/", " src=\"")
+                            c[1].replace(" url=d/", " url=")
+                                .replace(" url=/", " url=")
                                 .replace(" url=", " src=")
                         )
                     }),
