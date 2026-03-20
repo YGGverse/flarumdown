@@ -9,7 +9,7 @@ Flarum is down - read as Markdown
 CLI tool for Flarum v2 that allows to export public DB entries into Markdown format.
 
 > [!IMPORTANT]
-> This extension was created by and for the UANA community forum. This means that it's adapted for our build only:
+> This extension was created by and for the UANA community forums. This means that it's adapted for our local build first:
 > * SQLite driver is in use
 > * FoF/upload plugin installed
 > * Markdown (only) plugin is enabled
