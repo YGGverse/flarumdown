@@ -6,7 +6,7 @@
 
 Flarum is down - read in Markdown
 
-CLI tool for Flarum v2 that allows to export public DB entries into Markdown format.
+CLI tool for [Flarum](https://flarum.org) v2 that allows to export public DB entries into Markdown format.
 
 > [!IMPORTANT]
 > This extension was created by and for the UANA community forums. This means that it's adapted for our local build first:
