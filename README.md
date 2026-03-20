@@ -42,13 +42,15 @@ Optionally, delegate `-u` to `rsync` by using `crontab -e`:
 
 mkdir -p /var/www/flarum/public/flarumdown/dump/assets/files
 
+# collect FoF/upload files
 readonly RSYNC_FILTER_P="*-thumb.webp"
 readonly RSYNC_TARGET_D="/var/www/flarum/public/flarumdown/dump/assets"
-find "$RSYNC_TARGET_D" -name "$RSYNC_FILTER_P" -type f -delete # rsync has --filter, cleanup matches manually
+find "$RSYNC_TARGET_D" -name "$RSYNC_FILTER_P" -type f -delete # rsync has --filter
 /usr/bin/rsync -av --delete --filter="-p $RSYNC_FILTER_P" \
 		/var/www/flarum/public/assets/files \
 		$RSYNC_TARGET_D
 
+# dump the DB
 RUST_LOG=warn /usr/local/bin/flarumdown -s /var/www/flarum/flarum.sqlite \
 					-t /var/www/flarum/public/flarumdown/dump \
 					-i index \
@@ -57,6 +59,7 @@ RUST_LOG=warn /usr/local/bin/flarumdown -s /var/www/flarum/flarum.sqlite \
 					-r http://hc3fycfadz7fkapp62fqi6llioe46fvis6wuswfobl5ghc2u7snq.b32.i2p \
 					-r http://w6vtcpbir5vvokwdqqbqlrdtnzwyfc4iyqn6owxuyjeppszuydutqwqd.onion
 
+# create .zip file to simply download for offline reading
 readonly TARGET_DIR=/var/www/flarum/public/flarumdown/dump
 cd "$TARGET_DIR"
 if [ "$(pwd)" != "$TARGET_DIR" ]; then
