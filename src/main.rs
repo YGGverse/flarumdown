@@ -260,15 +260,15 @@ fn main() -> Result<()> {
 }
 
 fn pre_format(data: &str, uploads: &mut HashSet<PathBuf>) -> String {
+    const R: &str = r#"(?s)<UPL-IMAGE-PREVIEW\s+alt="([^"]*)"\s+.*?url="([^"]*)"\s+[^>]*>[^<]*</UPL-IMAGE-PREVIEW>"#;
     html_escape::decode_html_entities(&strip_tags::strip_tags(
-        &Regex::new(r#"(?s)<UPL-IMAGE-PREVIEW\s+alt="([^"]*)"\s+.*?url="([^"]*)"\s+[^>]*>[^<]*</UPL-IMAGE-PREVIEW>"#)
-        .unwrap()
-        .replace_all(data, |c: &Captures| {
-            let rel = c[2]
-                .trim_start_matches("/")
-                .trim_start_matches("d/");
+        &Regex::new(R).unwrap().replace_all(data, |c: &Captures| {
+            let rel = c[2].trim_start_matches("/").trim_start_matches("d/");
             uploads.insert(rel.into());
-            format!("![{}]({rel})", c.get(1).map(|s|s.as_str()).unwrap_or_default())
+            format!(
+                "![{}]({rel})",
+                c.get(1).map(|s| s.as_str()).unwrap_or_default()
+            )
         }),
     ))
     .into()
