@@ -6,7 +6,13 @@
 
 Flarum is down - read as Markdown
 
-CLI tool for Flarum v2 that allows to export public DB into Markdown format.
+CLI tool for Flarum v2 that allows to export public DB entries into Markdown format.
+
+> [!IMPORTANT]
+> This extension was created by and for the UANA community forum. This means that it's adapted for our build only:
+> * FoF/upload plugin installed
+> * Markdown (only) plugin is enabled
+> * Flarum v2 (7 beta)
 
 ## Install
 
@@ -25,4 +31,4 @@ RUST_LOG=warn flarumdown -s '/path/to/flarum.sqlite' \
                          -r http://hc3fycfadz7fkapp62fqi6llioe46fvis6wuswfobl5ghc2u7snq.b32.i2p \
                          -r http://w6vtcpbir5vvokwdqqbqlrdtnzwyfc4iyqn6owxuyjeppszuydutqwqd.onion
 ```
-* optionally, delegate to `crontab -e`
+* optionally, delegate `-u` to `rsync` by using `crontab -e`
