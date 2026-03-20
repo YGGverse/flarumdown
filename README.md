@@ -10,6 +10,7 @@ CLI tool for Flarum v2 that allows to export public DB entries into Markdown for
 
 > [!IMPORTANT]
 > This extension was created by and for the UANA community forum. This means that it's adapted for our build only:
+> * SQLite driver is in use
 > * FoF/upload plugin installed
 > * Markdown (only) plugin is enabled
 > * Flarum v2 (7 beta)
