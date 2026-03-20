@@ -6,7 +6,6 @@ use chrono::{DateTime, Local, Utc};
 use clap::Parser;
 use config::Config;
 use database::Database;
-use html_to_markdown_rs::convert;
 use log::*;
 use regex::{Captures, Regex};
 use std::{
@@ -174,10 +173,9 @@ fn main() -> Result<()> {
                         ));
                         let mut uploads = HashSet::new();
                         content.push({
-                            let mut post = post_format(&convert(
-                                pre_format(&post.content, &mut uploads).trim(),
-                                None,
-                            )?);
+                            let mut post = post_format(
+                                pre_format(&post.content, &mut uploads).trim()
+                            );
                             for d in &discussions {
                                 post = post
                                     .replace(
@@ -240,7 +238,7 @@ fn main() -> Result<()> {
                                 }
                             }
                         }
-                        content.push("---\n".into())
+                        content.push("\n---\n".into())
                     }
                     content.push(format!("Generated at {}\n", Utc::now()));
                     for refer in &config.refer {
@@ -262,46 +260,18 @@ fn main() -> Result<()> {
 }
 
 fn pre_format(data: &str, uploads: &mut HashSet<PathBuf>) -> String {
-    Regex::new(r"<e>[^<]+</e>")
+    html_escape::decode_html_entities(&strip_tags::strip_tags(
+        &Regex::new(r#"(?s)<UPL-IMAGE-PREVIEW\s+alt="([^"]*)"\s+.*?url="([^"]*)"\s+[^>]*>[^<]*</UPL-IMAGE-PREVIEW>"#)
         .unwrap()
-        .replace_all(
-            &Regex::new(r"<s>[^<]+</s>").unwrap().replace_all(
-                &Regex::new(r"(?s)<UPL-IMAGE-PREVIEW[^>]+>([^<]+)</UPL-IMAGE-PREVIEW>")
-                    .unwrap()
-                    .replace_all(data, |c: &Captures| {
-                        uploads.insert(
-                            Regex::new(r#"url="?([^\s]+)"?"#)
-                                .unwrap()
-                                .captures(&c[1])
-                                .unwrap()[1]
-                                .trim_start_matches("/")
-                                .trim_start_matches("d/")
-                                .into(),
-                        );
-                        format!(
-                            "<img{}>",
-                            c[1].replace(" url=d/", " url=")
-                                .replace(" url=/", " url=")
-                                .replace(" url=", " src=")
-                        )
-                    }),
-                "",
-            ),
-            "",
-        )
-        .replace("<C", "<code")
-        .replace("</C>", "</code>")
-        .replace("<QUOTE", "<blockquote")
-        .replace("</QUOTE>", "</blockquote>")
-        .replace("<LIST", "<ul")
-        .replace("</LIST>", "</ul>")
-        .replace("<URL", "<a")
-        .replace("</URL>", "</a>")
-        .replace(" url=\"/", " href=\"")
-        .replace(" url=\"d/", " href=\"")
-        .replace(" url=", " href=")
-        .replace("<r>", "")
-        .replace("</r>", "")
+        .replace_all(data, |c: &Captures| {
+            let rel = c[2]
+                .trim_start_matches("/")
+                .trim_start_matches("d/");
+            uploads.insert(rel.into());
+            format!("![{}]({rel})", c.get(1).map(|s|s.as_str()).unwrap_or_default())
+        }),
+    ))
+    .into()
 }
 
 fn post_format(data: &str) -> String {
