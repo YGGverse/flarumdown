@@ -44,7 +44,7 @@ $ crontab -u www-data -e
 ``` flarumdown.sh
 #!/bin/bash
 
-RUST_LOG=trace /usr/local/bin/flarumdown \
+RUST_LOG=trace NO_COLOR=1 /usr/local/bin/flarumdown \
 			-s /var/www/flarum/flarum.sqlite \
 			-t /var/www/flarum/public/flarumdown/dump \
 			-p /var/www/flarum/public \
