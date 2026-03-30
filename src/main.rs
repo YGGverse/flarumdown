@@ -263,21 +263,33 @@ fn cleanup(target: &PathBuf, keep: &HashSet<PathBuf>) -> Result<()> {
 }
 
 fn pre_format(data: &str, uploads: &mut HashSet<PathBuf>) -> String {
-    // * keep leading `\s+url` to skip the `thumbnail_url` match
-    const R: &str = r#"(?s)<UPL-IMAGE-PREVIEW\s+alt="([^"]*)"\s+.*?\s+url="([^"]*)"\s+[^>]*>[^<]*</UPL-IMAGE-PREVIEW>"#;
-    html_escape::decode_html_entities(&strip_tags::strip_tags(
-        &Regex::new(R).unwrap().replace_all(data, |c: &Captures| {
-            let rel = c[2].trim_start_matches("/").trim_start_matches("d/");
+    let md = html_escape::decode_html_entities(&strip_tags::strip_tags(
+        &Regex::new(
+            // * keep leading `\s+url` to skip the `thumbnail_url` match
+            r#"(?s)<UPL-IMAGE-PREVIEW\s+alt="([^"]*)"\s+.*?\s+url="([^"]*)"\s+[^>]*>[^<]*</UPL-IMAGE-PREVIEW>"#
+        )
+            .unwrap()
+            .replace_all(data, |c: &Captures| {
+                format!(
+                    "![{}]({})",
+                    c.get(1).map(|s| s.as_str()).unwrap_or_default(),
+                    &c[2]
+                )
+            }),
+    )).to_string();
+    Regex::new(r#"!\[([^\]]*)\]\(([^)]+)\)"#)
+        .unwrap()
+        .replace_all(&md, |c: &Captures| {
+            let rel = c[2].trim_start_matches('/').trim_start_matches("d/");
             if uploads.insert(rel.into()) {
-                debug!("Register upload from the thumb capture: `{rel}`")
+                debug!("Register FoF/upload entry to handle: `{rel}`")
             }
             format!(
                 "![{}]({rel})",
                 c.get(1).map(|s| s.as_str()).unwrap_or_default()
             )
-        }),
-    ))
-    .into()
+        })
+        .into()
 }
 
 fn post_format(data: &str) -> String {
