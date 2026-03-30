@@ -269,7 +269,7 @@ fn pre_format(data: &str, uploads: &mut HashSet<PathBuf>) -> String {
         &Regex::new(R).unwrap().replace_all(data, |c: &Captures| {
             let rel = c[2].trim_start_matches("/").trim_start_matches("d/");
             if uploads.insert(rel.into()) {
-                debug!("Register upload: `{rel}`")
+                debug!("Register upload from the thumb capture: `{rel}`")
             }
             format!(
                 "![{}]({rel})",
