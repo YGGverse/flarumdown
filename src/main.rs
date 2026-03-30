@@ -11,7 +11,7 @@ use regex::{Captures, Regex};
 use std::{
     collections::{HashMap, HashSet},
     env::var,
-    fs::{File, copy, create_dir_all, read_dir, remove_dir_all, remove_file},
+    fs::{File, copy, create_dir_all, read_dir, remove_file},
     io::Write,
     path::PathBuf,
 };
@@ -56,18 +56,10 @@ fn main() -> Result<()> {
     if !config.target.exists() {
         create_dir_all(&config.target)?;
     }
-    for entry in read_dir(&config.target)? {
-        let path = entry?.path();
-        if path.is_file() {
-            remove_file(path)?;
-        } else if path.is_dir() && config.upload.is_some() {
-            remove_dir_all(path)?;
-        }
-    }
 
     let mut db = Database::connect(config.source)?;
-
-    let mut users = HashMap::new();
+    let mut keep = HashSet::with_capacity(1000); // @TODO count entries expected from the DB
+    let mut users = HashMap::with_capacity(100); // @TODO count entries expected from the DB
     for user in db.users()? {
         assert!(
             users
@@ -81,7 +73,7 @@ fn main() -> Result<()> {
         )
     }
 
-    let mut tags = HashMap::new();
+    let mut tags = HashMap::with_capacity(100); // @TODO count entries expected from the DB
     for tag in db.tags()? {
         if !config.filter_tag.is_empty() && !config.filter_tag.contains(&tag.slug) {
             continue;
@@ -89,7 +81,7 @@ fn main() -> Result<()> {
         assert!(tags.insert(tag.id, tag.slug).is_none())
     }
 
-    let mut discussions = Vec::new();
+    let mut discussions = Vec::with_capacity(1000); // @TODO count entries expected from the DB
     for discussion in db.discussions()? {
         if !db
             .discussion_tag_ids(discussion.id)?
@@ -100,7 +92,7 @@ fn main() -> Result<()> {
         }
         assert!(users.contains_key(&discussion.user_id));
 
-        let mut posts = Vec::new();
+        let mut posts = Vec::with_capacity(1000); // @TODO count entries expected from the DB
         for post in db.posts(discussion.id)? {
             posts.push(Post {
                 id: post.id,
@@ -121,11 +113,13 @@ fn main() -> Result<()> {
     }
 
     if let Some(index) = config.index {
-        let mut file = File::create_new({
+        let path = {
             let mut path = PathBuf::from(&config.target);
             path.push(format!("{}.md", index.trim_end_matches(".md")));
             path
-        })?;
+        };
+        let mut file = File::create(&path)?;
+        keep.insert(path);
         for discussion in &discussions {
             file.write_all(
                 format!(
@@ -151,11 +145,13 @@ fn main() -> Result<()> {
     }
 
     for discussion in &discussions {
-        let mut file = File::create_new({
+        let path = {
             let mut path = PathBuf::from(&config.target);
             path.push(format!("{}.md", discussion.id));
             path
-        })?;
+        };
+        let mut file = File::create(&path)?;
+        keep.insert(path);
         file.write_all(
             {
                 let mut page = Vec::new();
@@ -195,47 +191,42 @@ fn main() -> Result<()> {
                             post
                         });
                         for upload in &uploads {
-                            let path_target = {
+                            let t = {
                                 let mut p = PathBuf::from(&config.target);
                                 p.push(upload);
                                 p
                             };
-                            match config.upload {
-                                // upload option is active,
-                                // create files copy in the destinations
-                                Some(ref upload_source) => {
-                                    let mut p = PathBuf::from(upload_source);
-                                    p.push(upload);
-                                    match p.canonicalize() {
-                                        Ok(src) => {
-                                            if src.starts_with(upload_source) {
-                                                if !path_target.exists() {
-                                                    create_dir_all(path_target.parent().unwrap())?;
-                                                    copy(src, path_target)?;
-                                                }
-                                            } else {
-                                                warn!(
-                                                    "Possible traversal injection: `{}` (post #{}, user #{})",
-                                                    src.to_string_lossy(),
-                                                    post.id,
-                                                    post.user_id
-                                                )
-                                            }
+                            let mut p = PathBuf::from(&config.public);
+                            p.push(upload);
+                            match p.canonicalize() {
+                                Ok(src) => {
+                                    if src.starts_with(&config.public) {
+                                        if t.exists() {
+                                            debug!(
+                                                "Copied file `{}` for `{}` exists, skip overwrite",
+                                                t.to_string_lossy(),
+                                                src.to_string_lossy(),
+                                            );
+                                        } else {
+                                            create_dir_all(t.parent().unwrap())?;
+                                            copy(&src, &t)?;
+                                            debug!(
+                                                "Copied file from `{}` to `{}`",
+                                                src.to_string_lossy(),
+                                                t.to_string_lossy(),
+                                            );
+                                            keep.insert(t);
                                         }
-                                        Err(e) => error!("{e}: `{}` (post #{})", p.to_string_lossy(), post.id)
-                                    }
-                                },
-                                // task delegated to rsync
-                                // * manually pre-copied FoF/upload destinations must exist
-                                None => {
-                                    if !path_target.exists() {
+                                    } else {
                                         warn!(
-                                            "Referenced file does not exist: `{}` (post #{})",
-                                            path_target.to_string_lossy(),
-                                            post.id
+                                            "Possible traversal injection: `{}` (post #{}, user #{})",
+                                            src.to_string_lossy(),
+                                            post.id,
+                                            post.user_id
                                         )
                                     }
                                 }
+                                Err(e) => error!("{e}: `{}` (post #{})", p.to_string_lossy(), post.id)
                             }
                         }
                         content.push("\n---\n".into())
@@ -255,7 +246,19 @@ fn main() -> Result<()> {
             .as_bytes(),
         )?
     }
+    cleanup(&config.target, &keep)
+}
 
+/// Recursively removes entries that not exists in the `keep` registry
+/// * empty directories cleanup yet not implemented @TODO
+fn cleanup(target: &PathBuf, keep: &HashSet<PathBuf>) -> Result<()> {
+    for entry in read_dir(target)? {
+        let p = entry?.path();
+        if p.is_file() && !keep.contains(&p) {
+            remove_file(&p)?;
+            debug!("Cleanup file `{}`", p.to_string_lossy());
+        }
+    }
     Ok(())
 }
 
