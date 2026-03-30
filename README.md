@@ -24,7 +24,7 @@ cargo install flarumdown
 ## Usage
 
 ``` bash
-RUST_LOG=trace flarumdown -s '/path/to/flarum.sqlite' \
+RUST_LOG=debug flarumdown -s '/path/to/flarum.sqlite' \
                           -t '/path/to/target' \
                           -p '/path/to/public' \
                           -i index \
