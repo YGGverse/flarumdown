@@ -34,7 +34,12 @@ RUST_LOG=warn flarumdown -s '/path/to/flarum.sqlite' \
                          -r http://w6vtcpbir5vvokwdqqbqlrdtnzwyfc4iyqn6owxuyjeppszuydutqwqd.onion
 ```
 
-### Scripting
+### Crontab
+
+``` bash
+$ crontab -u www-data -e
+@weekly /var/www/flarum/flarumdown.sh > /dev/null 2>&1
+```
 
 ``` flarumdown.sh
 #!/bin/bash
@@ -52,11 +57,13 @@ RUST_LOG=trace /usr/local/bin/flarumdown \
 # create .zip file to simply download for offline reading
 readonly TARGET_DUMP_D=/var/www/flarum/public/flarumdown/dump
 
-cd "$TARGET_DUMP_D"
-if [ "$(pwd)" != "$TARGET_DUMP_D" ]; then
-	echo "Unexpected path!"
-	exit 1
+cd -P "$TARGET_DUMP_D" || { echo "Could not cd to $TARGET_DUMP_D"; exit 1; }
+
+if [[ ! "$PWD" -ef "$TARGET_DUMP_D" ]]; then
+    echo "Unexpected path! Current: $PWD, Expected: $TARGET_DUMP_D"
+    exit 1
 fi
+
 zip -FS -r -9 /var/www/flarum/public/flarumdown/dump.zip .
 chmod 0755 -R "$TARGET_DUMP_D"
 ```
