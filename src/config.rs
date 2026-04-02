@@ -44,7 +44,7 @@ pub struct Config {
     pub index: Option<String>,
 
     /// Append time (created) to `index` entries in given format
-    /// * tip: escape with `%%d/%%m/%%Y %%H:%%M` when using CLI/bash argument
+    /// * example `%d/%m/%Y %H:%M`
     #[arg(long)]
     pub index_time_created: Option<String>,
 
