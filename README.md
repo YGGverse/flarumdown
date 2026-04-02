@@ -4,7 +4,7 @@
 [![Dependencies](https://deps.rs/repo/github/YGGverse/flarumdown/status.svg)](https://deps.rs/repo/github/YGGverse/flarumdown)
 [![crates.io](https://img.shields.io/crates/v/flarumdown.svg)](https://crates.io/crates/flarumdown)
 
-Flarum is down - read in Markdown
+Flarum down - read Markdown!
 
 CLI tool for [Flarum](https://flarum.org) v2 that allows to export public DB entries into Markdown format.
 
