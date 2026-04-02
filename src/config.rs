@@ -1,5 +1,21 @@
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use std::path::PathBuf;
+
+#[derive(ValueEnum, Debug, Default, Clone)]
+pub enum Order {
+    #[default]
+    Asc,
+    Desc,
+}
+
+impl std::fmt::Display for Order {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Asc => write!(f, "ASC"),
+            Self::Desc => write!(f, "DESC"),
+        }
+    }
+}
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -26,6 +42,11 @@ pub struct Config {
     /// Generate index file with given name
     #[arg(short, long)]
     pub index: Option<String>,
+
+    /// Order entries by ID
+    /// * useful as the `index` new / old records first
+    #[arg(short, long)]
+    pub order: Order,
 
     /// Append reference to original source (mirrors)
     #[arg(short, long)]

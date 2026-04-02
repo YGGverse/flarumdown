@@ -65,10 +65,11 @@ impl Database {
             .collect()
     }
 
-    pub fn discussions(&mut self) -> Result<Vec<Discussion>, Error> {
+    pub fn discussions(&mut self, order: &crate::config::Order) -> Result<Vec<Discussion>, Error> {
         self.0.prepare(
-            "SELECT `id`, `user_id`, `first_post_id`, `created_at`, `title`, `slug`
-                FROM `discussions` WHERE `is_private` <> 1 AND `is_approved` <> 0 AND `hidden_at` IS NULL",
+            &format!("SELECT `id`, `user_id`, `first_post_id`, `created_at`, `title`, `slug`
+                FROM `discussions` WHERE `is_private` <> 1 AND `is_approved` <> 0 AND `hidden_at` IS NULL
+                ORDER BY `id` {order}"),
         )?.query_map([], |row| {
             Ok(Discussion {
                 id: row.get(0)?,
