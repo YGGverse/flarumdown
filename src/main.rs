@@ -123,14 +123,19 @@ fn main() -> Result<()> {
         for discussion in &discussions {
             file.write_all(
                 format!(
-                    "* [{}]({}.md)\n",
+                    "* [{}]({}.md) {}\n",
                     discussion
                         .title
                         .replace("[", "\\[")
                         .replace("]", "\\]")
                         .replace("(", "\\(")
                         .replace(")", "\\)"),
-                    discussion.id
+                    discussion.id,
+                    config
+                        .index_time_created
+                        .as_ref()
+                        .map(|f| discussion.created_at.format(f).to_string())
+                        .unwrap_or_default()
                 )
                 .as_bytes(),
             )?;
