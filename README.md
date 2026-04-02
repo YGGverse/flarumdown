@@ -33,6 +33,7 @@ RUST_LOG=debug flarumdown -s '/path/to/flarum.sqlite' \
                           -r http://hc3fycfadz7fkapp62fqi6llioe46fvis6wuswfobl5ghc2u7snq.b32.i2p \
                           -r http://w6vtcpbir5vvokwdqqbqlrdtnzwyfc4iyqn6owxuyjeppszuydutqwqd.onion
 ```
+* see also `flarumdown --help`
 
 ### Crontab
 
