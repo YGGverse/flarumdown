@@ -82,7 +82,7 @@ fn main() -> Result<()> {
     }
 
     let mut discussions = Vec::with_capacity(1000); // @TODO count entries expected from the DB
-    for discussion in db.discussions(&config.order)? {
+    for discussion in db.discussions(&config.order_discussions)? {
         if !db
             .discussion_tag_ids(discussion.id)?
             .iter()

@@ -50,8 +50,8 @@ pub struct Config {
 
     /// Order entries by ID
     /// * useful as the `index` new / old records first
-    #[arg(short, long)]
-    pub order: Order,
+    #[arg(long)]
+    pub order_discussions: Order,
 
     /// Append reference to original source (mirrors)
     #[arg(short, long)]
