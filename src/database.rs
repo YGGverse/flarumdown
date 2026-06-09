@@ -16,7 +16,6 @@ pub struct Tag {
 pub struct Discussion {
     pub id: i64,
     pub user_id: i64,
-    pub first_post_id: i64,
     pub created_at: DateTime<Utc>,
     pub title: String,
     pub slug: String,
@@ -67,17 +66,16 @@ impl Database {
 
     pub fn discussions(&mut self, order: &crate::config::Order) -> Result<Vec<Discussion>, Error> {
         self.0.prepare(
-            &format!("SELECT `id`, `user_id`, `first_post_id`, `created_at`, `title`, `slug`
+            &format!("SELECT `id`, `user_id`, `created_at`, `title`, `slug`
                 FROM `discussions` WHERE `is_private` <> 1 AND `is_approved` <> 0 AND `hidden_at` IS NULL
                 ORDER BY `id` {order}"),
         )?.query_map([], |row| {
             Ok(Discussion {
                 id: row.get(0)?,
                 user_id: row.get(1)?,
-                first_post_id: row.get(2)?,
-                created_at: row.get(3)?,
-                title: row.get(4)?,
-                slug: row.get(5)?,
+                created_at: row.get(2)?,
+                title: row.get(3)?,
+                slug: row.get(4)?,
             })
         })?
         .collect()

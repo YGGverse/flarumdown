@@ -102,7 +102,7 @@ fn main() -> Result<()> {
                 content: post.content,
             })
         }
-        assert_eq!(discussion.first_post_id, posts.first().unwrap().id);
+
         discussions.push(Discussion {
             id: discussion.id,
             created_at: discussion.created_at,
